@@ -46,46 +46,29 @@
           (const :tag "Show warnings only if no errors occur." warn-after-errors))
   :group 'flycheck-purescript)
 
-(flycheck-def-option-var flycheck-purescript-output-file nil purescript
-  "The output file to compile to when performing syntax checking.
-
-The value of this variable is either nil, or a string with the
-path to the desired compilation output file.
-
-If nil, flycheck-purescript will compile to `/dev/null' so as to not
-interfere with your project files. 
-
-If a string is provided, the flycheck-purescript will compile your code
-to the given file each time it performs syntax checking. This can
-be set to any file with a .js or .html extension. Please note
-that the contents of this file will be overwritten every time
-flycheck-purescript successfully compiles your Purescript code."
-  :type '(string))
-
-
-(flycheck-def-option-var flycheck-purescript-main-file nil purescript
-  "A main purescript file for flycheck-purescript to compile instead of individual files.
-
-The value of this variable is either nil, in which case
-flycheck-purescript will compile individual files when checking them, or
-a string with the path to the main purescript file within your
-project. The main purescript file is the .purescript file which contains a
-\"main\" function, for example: \"Main.purs\")."
-  :type '(string))
+(defcustom flycheck-purescript-ignored-error-codes nil
+  "List of errors codes to ignore."
+  :type '(repeat string)
+  :group 'flycheck-purescript)
 
 
 (defun flycheck-purescript-decode-purescript-error (checker buffer type error)
+  "Decode a purescript json error and convert it to the flycheck error format."
   (let* ((position (assoc 'position error))
          (start-line (cdr (assoc 'startLine position)))
-         (start-col (cdr (assoc 'column position))))
-    (flycheck-error-new
-     :checker checker
-     :buffer buffer
-     :filename (cdr (assoc 'filename error))
-     :line start-line
-     :column start-col
-     :message (cdr (assoc 'message error))
-     :level type)))
+         (start-col (cdr (assoc 'startColumn position)))
+         (end-line (cdr (assoc 'endLine position)))
+         (end-col (cdr (assoc 'endColumn position)))
+         (error-code (cdr (assoc 'errorCode error))))
+    (when (not (-contains? flycheck-purescript-ignored-error-codes error-code))
+      (flycheck-error-new
+       :checker checker
+       :buffer buffer
+       :filename (cdr (assoc 'filename error))
+       :line start-line
+       :column start-col
+       :message (cdr (assoc 'message error))
+       :level type))))
 
 (defun flycheck-purescript-read-json (str)
   (let* ((json-array-type 'list))
@@ -110,15 +93,16 @@ project. The main purescript file is the .purescript file which contains a
          (t errors)))
       (_  (append errors warnings)))))
 
-(defun flycheck-purescript-filter-by-type (type lst)
-  "Return a new LIST of errors of type TYPE."
-  (cl-remove-if-not
-   (lambda (x)(equal (flycheck-purescript-decode-type x) type))
-   lst))
 
 (flycheck-define-checker purescript
   "A syntax checker for purescript-mode using the json output from psc"
-  :command ("psc" "--json-errors" "--no-opts" "-v" "-o" null-device source)
+  :command ("psc"
+            "--json-errors"
+            "--no-magic-do"
+            "--no-tco"
+            "--no-opts" "-v"
+            "bower_components/*/src/**/*.purs"
+            "src/**/*.purs")
   :error-parser flycheck-purescript-parse-errors
   :modes purescript-mode)
 
