@@ -19,9 +19,15 @@ Something equivalent to the following:
 
 ## Customizable Variables
 ### flycheck-purescript-reporting-mode
-    Determines the general class of errors to show. Can be `all`, `errors-only`, or `warn-after-errrors`.
+    Determines the general class of errors to show. Can be `all` (default), `errors-only`, or `warn-after-errrors`.
     The last will show warnings only when no errors have been detected.
     
 ### flycheck-purescript-ignored-error-codes
-    This takes a list of specific error codes to ignore by flycheck.
+    List of specific error codes to ignore by flycheck.
+    
+### flycheck-purescript-compiler-options
+    List of compiler options to send to psc.  Default is to turn off all opmizations.
 
+### flycheck-purescript-glob-patterns
+    List of globs to send the compiler.
+    

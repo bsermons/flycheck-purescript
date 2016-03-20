@@ -51,6 +51,18 @@
   :type '(repeat string)
   :group 'flycheck-purescript)
 
+(defcustom flycheck-purescript-compiler-options
+    '("--json-errors" "--no-magic-do" "--no-tco" "--no-opts" "-v")
+    "Compiler options to send to the purescript compiler."
+    :type '(repeat string)
+    :group 'flycheck-purescript)
+
+(defcustom flycheck-purescript-glob-patterns
+    '("bower_components/*/src/**/*.purs" "src/**/*.purs")
+    "Glob patterns to send to the purescript compiler."
+  :type '(repeat string)
+  :group 'flycheck-purescript)
+
 
 (defun flycheck-purescript-decode-purescript-error (checker buffer type error)
   "Decode a purescript json error and convert it to the flycheck error format."
@@ -97,12 +109,8 @@
 (flycheck-define-checker purescript
   "A syntax checker for purescript-mode using the json output from psc"
   :command ("psc"
-            "--json-errors"
-            "--no-magic-do"
-            "--no-tco"
-            "--no-opts" "-v"
-            "bower_components/*/src/**/*.purs"
-            "src/**/*.purs")
+            (eval flycheck-purescript-compiler-options)
+            (eval flycheck-purescript-glob-patterns))
   :error-parser flycheck-purescript-parse-errors
   :modes purescript-mode)
 
